@@ -1,6 +1,8 @@
+import {v4 as uuidv4} from 'uuid'
 import {
     GraphQLServer
 } from 'graphql-yoga'
+import { args } from 'commander'
 
 const pessoas = [
     {
@@ -85,6 +87,30 @@ const typeDefs = `
         comentarios: [Comentario!]!
     }
 
+    type Mutation {
+        inserirPessoa (pessoa: InserirPessoaInput): Pessoa!
+        inserirLivro (livro: InserirLivroInput!): Livro!
+        inserirComentario (comentario: InserirComentarioInput): Comentario!
+    }
+
+    input InserirPessoaInput {
+        nome: String!
+        idade: Int
+    }
+
+    input InserirLivroInput{
+        titulo: String!
+        edicao: Int!
+        autor: ID!
+    }
+
+    input InserirComentarioInput{
+        texto: String!
+        nota: Int!
+        livro: ID!
+        autor: ID!
+    }
+
 `
 
 const resolvers = {
@@ -97,6 +123,45 @@ const resolvers = {
         },
         comentarios(){
             return comentarios
+        }
+    },
+    Mutation: {
+        inserirPessoa (parent, args, ctx, info){
+            const pessoa = {
+                id: uuidv4(),
+                nome: args.pessoa.nome,
+                idade: args.pessoa.idade
+            }
+            pessoas.push(pessoa)
+            return pessoa
+        },
+        inserirLivro (parent, args, ctx, info){
+            const autorExiste = pessoas.some((pessoa) => pessoa.id === args.livro.autor)
+            if (!autorExiste)
+                throw new Error ("Autor não existe")
+            const livro = {
+                id: uuidv4(),
+                titulo: args.livro.titulo,
+                edicao: args.livro.edicao,
+                autor: args.livro.autor
+            }
+            livros.push(livro)
+            return livro
+        },
+        inserirComentario (parent, args, ctx, info){
+            const autorExiste = pessoas.some(p => p.id === args.comentario.autor)
+            const livroExiste = livros.some(l => l.id === args.comentario.livro)
+            if (!autorExiste || !livroExiste)
+                throw new Error ("Autor e/ou livro inexistente(s)")
+            const comentario = {
+                id: uuidv4(),
+                texto: args.comentario.texto,
+                nota: args.comentario.nota,
+                livro: args.comentario.livro,
+                autor: args.comentario.autor
+            }
+            comentarios.push(comentario)
+            return comentario
         }
     },
     Livro: {
@@ -113,7 +178,6 @@ const resolvers = {
             return livros.filter(livro => livro.autor === parent.id)
         },
         comentarios (parent, args, ctx, info){
-            console.log(JSON.stringify(parent))
             return comentarios.filter(comentario => comentario.autor === parent.id)
         }
     },
