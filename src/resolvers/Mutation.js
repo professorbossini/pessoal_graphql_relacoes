@@ -90,7 +90,10 @@ export default {
       autor: args.comentario.autor,
     };
     ctx.db.comentarios.push(comentario);
-    return comentario;
+    ctx.pubSub.publish (`comentario ${args.comentario.livro}`,{
+      comentario: comentario
+      });
+    return comentario
   },
   removerComentario(parent, args, ctx, info) {
     const indice = ctx.db.comentarios.findIndex((c) => c.id === args.id);
