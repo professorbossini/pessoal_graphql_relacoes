@@ -34,6 +34,13 @@ export default {
     ctx.db.comentarios = ctx.db.comentarios.filter((c) => c.autor !== args.id);
     return removido;
   },
+  atualizarPessoa(parent, args, {db}, info){
+    const pessoa = db.pessoas.find(p => p.id === args.id)
+    if (!pessoa)
+      throw new Error ("Pessoa não existe")
+    Object.assign(pessoa, {nome: args.pessoa.nome || pessoa.nome, idade: args.pessoa.idade || pessoa.idade})
+    return pessoa
+  },
   inserirLivro(parent, args, ctx, info) {
     const autorExiste = ctx.db.pessoas.some(
       (pessoa) => pessoa.id === args.livro.autor
@@ -56,6 +63,15 @@ export default {
       return c.livro !== args.id;
     });
     return removido;
+  },
+  atualizarLivro (parent, {id, livro}, ctx, info){
+    const {db} = ctx
+    const livroExistente = db.livros.find(l => l.id === id)
+    if (!livroExistente)
+      throw new Error ("Livro não existe")
+    Object.assign(livroExistente, {titulo: livro.titulo || livroExistente.titulo, edicao: livro.edicao || livroExistente.edicao})
+    return livroExistente
+
   },
   inserirComentario(parent, args, ctx, info) {
     const autorExiste = ctx.db.pessoas.some(
@@ -81,4 +97,14 @@ export default {
     if (indice < 0) throw new Error('Comentário não existe!');
     return comentarios.splice(indice, 1)[0];
   },
+  atualizarComentario (parent, {id, comentario}, {db}, info){
+    const comentarioExistente = db.comentarios.find (l => l.id === id)
+    if (!comentarioExistente)
+      throw new Error ("Comentario não existe")
+    Object.assign(comentarioExistente, {
+      texto: comentario.texto || comentarioExistente.texto,
+      nota: comentario.nota || comentarioExistente.nota
+    })
+    return comentarioExistente
+  }
 };
